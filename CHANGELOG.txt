@@ -1,0 +1,12 @@
+----- VERSION 0.2 -----
+
+Nuevas características:
+-Añadido sistema de logging.
+
+Cambio de cálculo de cuota:
+-El tiempo transcurrido durante la sesión en curso se tendrá en cuenta para el cálculo de cuota (solamente activo mientras la aplicación permanece abierta).
+
+Cambios de la lista de fichajes:
+-Añadida función de scroll sincronizada.
+-La lista de fichajes añade un texto placeholder mientras haya una sesión en curso.
+-La ventana emergente ya no es redimensionable. Su tamaño ha sido modificado.
