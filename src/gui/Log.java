@@ -31,7 +31,6 @@ public class Log {
 		    return sb.toString();
 		}
 	
-	//public?
 	public Logger logger = Logger.getLogger(Logger.class.getName());
 	private static FileHandler fh;
 }

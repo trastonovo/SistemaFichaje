@@ -3,9 +3,6 @@ package gui;
 import java.awt.event.*;
 import java.io.IOException;
 import java.sql.*;
-import java.util.function.Supplier;
-import java.util.logging.*;
-
 import javax.swing.JFrame;
 
 public class Runnable {
@@ -43,14 +40,11 @@ public class Runnable {
 }
 
 //TODO:
+//Show cuota list per day (WIP)
 //Botón de pausa
-//Error introducir fecha inválida en cuota
-//Show cuota list per day
-//Textarea sugerencias
-//Add changelog button
 //Formatear & filtrar ventana emergente fichajes
 //Clarificar mensajes error
-//Manejar calendario gráfico (checkCuota())
+//Manejar calendario gráfico (checkCuota()) [JSpinner?] + error al introducir valor inválido
 //Optimizar conexiones
 
 //Look up: Hibernate; Maven (POM.xml)

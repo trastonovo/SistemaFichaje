@@ -9,7 +9,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.Temporal;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -32,6 +34,19 @@ public class MainPanel extends JPanel implements ActionListener {
 		checkCuota = new JButton("Cuota");
 		add(checkCuota).setBackground(Color.ORANGE);
 		checkCuota.addActionListener(this);	
+		
+		/////////////WIP (sacar del constructor)	+ Modular cálculo cuota(?)
+		JTextArea recent = new JTextArea();
+		add(recent);
+		recent.setEditable(false);
+		LocalDate current = LocalDate.now();
+		LocalDate before = current.minusDays(7);
+		ArrayList<LocalDate> days = getDaysBetween(before, current);
+		
+		for(int i=0; i<days.size(); i++) {
+			recent.append(days.get(i).toString()+"\n");
+		}
+		/////////////
 		
 		buttonDisabled();
 		
@@ -213,7 +228,6 @@ public class MainPanel extends JPanel implements ActionListener {
 		
 		boolean checkIn = false;
 		boolean checkOut = false;
-		boolean oneTime = true;
 		
 		while(rsIn.next()) {
 			
@@ -234,12 +248,23 @@ public class MainPanel extends JPanel implements ActionListener {
 		}
 		
 		//Retrieves placeholder text w/o clocking out
-		if(clockOut.isEnabled() && oneTime){
-			taOut.append("\n  -SESIÓN EN CURSO-");
-			oneTime = false;		
+		if(clockOut.isEnabled()){
+			taOut.append("\n  -SESIÓN EN CURSO-");	
 		}
 	}
 	
+	//Return Date dates between two String dates
+	public ArrayList<LocalDate> getDaysBetween(LocalDate start, LocalDate end) {
+								
+		ArrayList<LocalDate> totalDates = new ArrayList<>();
+		
+		while (!start.isAfter(end)) {
+			totalDates.add(start);
+			start = start.plusDays(1);
+		}
+		return totalDates;	
+	}
+		
 	private Instant start, finish;
 	private JButton clockIn, clockOut, checkClock, checkCuota;
 	private static SQL db = new SQL();
