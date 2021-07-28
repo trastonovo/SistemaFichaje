@@ -2,7 +2,9 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.net.ssl.SNIHostName;
 import javax.swing.*;
 import java.sql.*;
@@ -22,56 +24,50 @@ public class MainPanel extends JPanel implements ActionListener {
 	
 	public MainPanel() {
 		
-		clockIn = new JButton("Fichar entrada");
-		add(clockIn);
+		setLayout(new BorderLayout());
+		
+		JPanel northPanel = new JPanel();
+		add(northPanel, BorderLayout.NORTH);
+		
+		JPanel eastPanel = new JPanel();
+		add(eastPanel, BorderLayout.EAST);
+		eastPanel.setPreferredSize(new Dimension(50,50));
+		
+		JPanel southPanel = new JPanel();
+		southPanel.setLayout(new BorderLayout());
+		add(southPanel, BorderLayout.SOUTH);
+		southPanel.setPreferredSize(new Dimension(25,25));
+		
+		Icon iconBookOpen = new ImageIcon("images/book_open.png");
+		clockIn = new JButton("Entrada", iconBookOpen);
+		northPanel.add(clockIn);
 		clockIn.addActionListener(this);
+		clockIn.setPreferredSize(new Dimension(150,40));
 		
-		clockOut = new JButton("Fichar salida");
-		add(clockOut);
+		Icon iconBookClosed = new ImageIcon("images/book_closed.png");
+		clockOut = new JButton("Salida", iconBookClosed);
+		northPanel.add(clockOut);
 		clockOut.addActionListener(this);	
+		clockOut.setPreferredSize(new Dimension(150,40));
 		
-		checkClock = new JButton("Lista de fichajes");
-		add(checkClock).setBackground(Color.YELLOW);
-		checkClock.addActionListener(this);
-		
-		checkCuota = new JButton("Cuota");
-		add(checkCuota).setBackground(Color.ORANGE);
+		Icon iconCuota = new ImageIcon("images/clock.png");
+		checkCuota = new JButton(iconCuota);
+		eastPanel.add(checkCuota).setBackground(Color.WHITE);
 		checkCuota.addActionListener(this);	
+		checkCuota.setPreferredSize(new Dimension(40,40));
 		
-		/////////////
-		/////////////WIP (sacar del constructor)
-		JTextArea recent = new JTextArea(10,12);
-		add(recent);
-		recent.setEditable(false);
+		Icon iconList = new ImageIcon("images/list.png");
+		checkClock = new JButton(iconList);
+		eastPanel.add(checkClock).setBackground(Color.WHITE);
+		checkClock.addActionListener(this);
+		checkClock.setPreferredSize(new Dimension(40,40));		
 		
-		JScrollPane sp = new JScrollPane(recent);
-		add(sp);
-		
-		JScrollBar sb = sp.getVerticalScrollBar();
-		sb.setValue(sb.getMaximum());
-				
-		LocalDate current = LocalDate.now();
-		LocalDate before = current.minusDays(14);		
-		
-		ArrayList<LocalDate> days = getDaysBetween(before, current);
-				
-		for(int i=0; i<days.size(); i++) {
-			long[] dayCuota = cuota(days.get(i).toString(), false);
-			recent.append(days.get(i).toString() + ":  " + dayCuota[0] + "h, " + dayCuota[1] + "m");
-			
-			if((days.size()-1)<=i)
-				break;
-			
-			recent.append("\n");
-				
-		}
-		/////////////
-		/////////////
+		recentList();
 		
 		buttonDisabled();
 		
-		JLabel version = new JLabel("Versión preliminar 0.2");
-		add(version);		
+		JLabel version = new JLabel("  Versión preliminar 0.3  ");
+		southPanel.add(version, BorderLayout.WEST);		
 	}	
 
 	public void actionPerformed(ActionEvent e) {
@@ -290,7 +286,36 @@ public class MainPanel extends JPanel implements ActionListener {
 		unfinishedTime = false;
 		return returnTime;
 	}
+	
+	public void recentList() {
 		
+		recent = new JTextArea(10,12);
+		add(recent);
+		recent.setEditable(false);
+
+		JScrollPane sp = new JScrollPane(recent);
+		add(sp);
+		
+		JScrollBar sb = sp.getVerticalScrollBar();
+		sb.setValue(sb.getMaximum());
+		
+		LocalDate current = LocalDate.now();
+		LocalDate before = current.minusDays(14);		
+		
+		ArrayList<LocalDate> days = getDaysBetween(before, current);
+				
+		for(int i=0; i<days.size(); i++) {
+			long[] dayCuota = cuota(days.get(i).toString(), false);
+			recent.append(days.get(i).toString() + ":  " + dayCuota[0] + "h, " + dayCuota[1] + "m");
+			
+			if((days.size()-1)<=i)
+				break;
+			
+			recent.append("\n");
+		}
+	}
+	
+	private JTextArea recent;
 	private Instant start, finish;
 	private JButton clockIn, clockOut, checkClock, checkCuota;
 	private static SQL db = new SQL();

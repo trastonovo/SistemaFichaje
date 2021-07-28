@@ -1,6 +1,8 @@
 ----- VERSION 0.3 -----
 Nuevas características:
 -Añadido un campo de fechas recientes con sus correspondientes cuotas
+-Añadidos elementos visuales
+-rediseño de la interfaz gráfica
 
 Corrección de errores:
 -Cálculo de tiempo transcurrido en una sesión concurrente
