@@ -40,9 +40,8 @@ public class Runnable {
 }
 
 //TODO:
-//Show cuota list per day (WIP)
 //Botón de pausa
-//Formatear & filtrar ventana emergente fichajes
+//Formatear & filtrar ventana emergente fichajes (+invertir orden)
 //Clarificar mensajes error
 //Manejar calendario gráfico (checkCuota()) [JSpinner?] + error al introducir valor inválido
 //Optimizar conexiones

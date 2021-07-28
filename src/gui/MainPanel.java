@@ -2,6 +2,8 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
+
+import javax.net.ssl.SNIHostName;
 import javax.swing.*;
 import java.sql.*;
 import java.text.DateFormat;
@@ -10,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -35,17 +38,34 @@ public class MainPanel extends JPanel implements ActionListener {
 		add(checkCuota).setBackground(Color.ORANGE);
 		checkCuota.addActionListener(this);	
 		
-		/////////////WIP (sacar del constructor)	+ Modular cálculo cuota(?)
-		JTextArea recent = new JTextArea();
+		/////////////
+		/////////////WIP (sacar del constructor)
+		JTextArea recent = new JTextArea(10,12);
 		add(recent);
 		recent.setEditable(false);
-		LocalDate current = LocalDate.now();
-		LocalDate before = current.minusDays(7);
-		ArrayList<LocalDate> days = getDaysBetween(before, current);
 		
+		JScrollPane sp = new JScrollPane(recent);
+		add(sp);
+		
+		JScrollBar sb = sp.getVerticalScrollBar();
+		sb.setValue(sb.getMaximum());
+				
+		LocalDate current = LocalDate.now();
+		LocalDate before = current.minusDays(14);		
+		
+		ArrayList<LocalDate> days = getDaysBetween(before, current);
+				
 		for(int i=0; i<days.size(); i++) {
-			recent.append(days.get(i).toString()+"\n");
+			long[] dayCuota = cuota(days.get(i).toString(), false);
+			recent.append(days.get(i).toString() + ":  " + dayCuota[0] + "h, " + dayCuota[1] + "m");
+			
+			if((days.size()-1)<=i)
+				break;
+			
+			recent.append("\n");
+				
 		}
+		/////////////
 		/////////////
 		
 		buttonDisabled();
@@ -98,54 +118,14 @@ public class MainPanel extends JPanel implements ActionListener {
 			}				
 		}
 		//Check hour cuota from a given day
-		if(button==checkCuota) {
-			try {			
-				long diffMs = 0;
-				long diffM = 0;
-				long diffMTotal = 0;
-				long diffHTotal = 0;
-				long minutesRemaining = 0;
-				boolean oneTime = true;
-				java.util.Date date1 = null;
-				java.util.Date date2 = null;
-				String iDate = JOptionPane.showInputDialog("Introduce fecha 'yyyy-MM-dd'\nVacío para fecha actual");
-				if(iDate.equals("")) {			
-					iDate = date;
-				}
-				ResultSet[] rs = db.calculateHours(iDate);			
-				while(rs[0].next() && rs[1].next()) {
-					
-					SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-					date1 = sdf.parse(rs[0].getString(2));
-					date2 = sdf.parse(rs[1].getString(2));					
-					diffMs = date2.getTime() - date1.getTime();
-					
-					//If statement: adds time w/o clocking out
-					if(clockOut.isEnabled() && oneTime){
-						finish = Instant.now();
-						long timeElapsed = Duration.between(start, finish).toMillis();
-						diffMs += timeElapsed;
-						oneTime = false;		
-					}
-					
-					diffM = (diffMs/1000)/60;
-					diffMTotal += diffM;
-					diffHTotal = diffMTotal/60;
-					minutesRemaining = diffMTotal%60;
-				}				
-				JOptionPane.showMessageDialog(null, diffHTotal+"h, "+minutesRemaining+"m", "Horas registradas " + iDate, JOptionPane.INFORMATION_MESSAGE);
-			} catch(ClassNotFoundException ex) {
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
-				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
-			} catch (SQLException ex) {
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "SQLException", JOptionPane.ERROR_MESSAGE);
-				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
-			} catch (ParseException ex) {
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "ParseException", JOptionPane.ERROR_MESSAGE);
-				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
-			} catch (NullPointerException ex) {
-				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
-			}	
+		if(button==checkCuota) {	
+			long[] returnTime;
+			String iDate = JOptionPane.showInputDialog("Introduce fecha 'yyyy-MM-dd'\nVacío para fecha actual");
+			if(iDate.equals("")) {			
+				iDate = date;
+			}
+			returnTime = cuota(iDate, true);				
+			JOptionPane.showMessageDialog(null, returnTime[0]+"h, "+returnTime[1]+"m", "Horas registradas " + iDate, JOptionPane.INFORMATION_MESSAGE);
 		}
 		
 		buttonDisabled();
@@ -263,6 +243,52 @@ public class MainPanel extends JPanel implements ActionListener {
 			start = start.plusDays(1);
 		}
 		return totalDates;	
+	}
+	
+	//Check cuota from a given day
+	public long[] cuota(String date, boolean unfinishedTime) {
+		
+		long[] returnTime = new long[2];
+		long diffMs = 0;
+		long diffM = 0;
+		long diffMTotal = 0;
+		long diffHTotal = 0;
+		long minutesRemaining = 0;
+		java.util.Date date1 = null;
+		java.util.Date date2 = null;		
+		try {
+			ResultSet[] rs = db.calculateHours(date);
+			while(rs[0].next() && rs[1].next()) {
+				
+				SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+				date1 = sdf.parse(rs[0].getString(2));
+				date2 = sdf.parse(rs[1].getString(2));
+				diffMs = date2.getTime() - date1.getTime();
+				
+				//If statement: adds time w/o clocking out
+				if(clockOut.isEnabled() && unfinishedTime){
+					finish = Instant.now();
+					long timeElapsed = Duration.between(start, finish).toMillis();
+					diffMs += timeElapsed;
+					unfinishedTime = false;		
+				}
+				
+				diffM = (diffMs/1000)/60;
+				diffMTotal += diffM;
+				diffHTotal = diffMTotal/60;
+				minutesRemaining = diffMTotal%60;							
+			}
+			returnTime[0] = diffHTotal;	
+			returnTime[1] = minutesRemaining;
+		} catch (ClassNotFoundException | SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getMessage(), "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
+			Runnable.myLog.logger.info(e + " - " +  Runnable.myLog.stackTraceToString(e));
+		} catch (ParseException e) {
+			JOptionPane.showMessageDialog(null, e.getMessage(), "ParseException", JOptionPane.ERROR_MESSAGE);
+			Runnable.myLog.logger.info(e + " - " +  Runnable.myLog.stackTraceToString(e));
+		}
+		unfinishedTime = false;
+		return returnTime;
 	}
 		
 	private Instant start, finish;
