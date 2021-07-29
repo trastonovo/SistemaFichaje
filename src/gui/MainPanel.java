@@ -2,23 +2,28 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.net.ssl.SNIHostName;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
+
+import com.toedter.calendar.JCalendar;
+
 import java.sql.*;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Locale;
 
 public class MainPanel extends JPanel implements ActionListener {
 	
@@ -62,11 +67,28 @@ public class MainPanel extends JPanel implements ActionListener {
 		checkClock.addActionListener(this);
 		checkClock.setPreferredSize(new Dimension(40,40));		
 		
-		recentList();
+		centerPanel1 = new JPanel();
+		centerPanel2 = new JPanel();
+		centerPanel1.setLayout(new BorderLayout());
+		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerPanel1, centerPanel2);
+		split.setEnabled(false);
+		split.setDividerSize(0);
+		add(split, BorderLayout.CENTER);
+		
+		////////////////
+		/////////////// IMAGE TEST [rise dog gif]
+		String url = "images/carbotZergling.gif";
+		JLabel picLabel = new JLabel(new ImageIcon(url));
+		centerPanel2.add(picLabel);
+		////////////////
+		////////////////
+
+		recentList();				
 		
 		buttonDisabled();
 		
 		JLabel version = new JLabel("  Versión preliminar 0.3  ");
+		version.setFont(new Font("Arial", Font.ITALIC, 11));
 		southPanel.add(version, BorderLayout.WEST);		
 	}	
 
@@ -103,6 +125,23 @@ public class MainPanel extends JPanel implements ActionListener {
 		}	
 		//Check clock in and clock out list
 		if(button==checkClock) {
+			////////////////////////
+			///////////////////////AUDIO TEST
+			String uri = "audio/Final Fantasy VII - Victory Fanfare [HQ].wav";
+			AudioInputStream ais;
+			try {
+				ais = AudioSystem.getAudioInputStream(new File(uri).getAbsoluteFile());
+				Clip clip = AudioSystem.getClip();
+				clip.open(ais);
+				clip.start();
+			} catch (UnsupportedAudioFileException | IOException e1) {
+				e1.printStackTrace();
+			} catch (LineUnavailableException e1) {
+				e1.printStackTrace();
+			}			
+
+			///////////////////////
+			///////////////////////
 			try {
 				showClockIO();
 			} catch(ClassNotFoundException ex) {
@@ -289,15 +328,16 @@ public class MainPanel extends JPanel implements ActionListener {
 	
 	public void recentList() {
 		
-		recent = new JTextArea(10,12);
-		add(recent);
+		JLabel label = new JLabel("Lista reciente:");
+		label.setForeground(Color.GRAY);
+		centerPanel1.add(label, BorderLayout.NORTH);
+		
+		recent = new JTextArea(15,12);
+		centerPanel1.add(recent);
 		recent.setEditable(false);
 
 		JScrollPane sp = new JScrollPane(recent);
-		add(sp);
-		
-		JScrollBar sb = sp.getVerticalScrollBar();
-		sb.setValue(sb.getMaximum());
+		centerPanel1.add(sp);
 		
 		LocalDate current = LocalDate.now();
 		LocalDate before = current.minusDays(14);		
@@ -315,6 +355,7 @@ public class MainPanel extends JPanel implements ActionListener {
 		}
 	}
 	
+	private JPanel centerPanel1, centerPanel2;
 	private JTextArea recent;
 	private Instant start, finish;
 	private JButton clockIn, clockOut, checkClock, checkCuota;

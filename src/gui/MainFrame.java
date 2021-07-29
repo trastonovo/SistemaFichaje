@@ -8,9 +8,9 @@ public class MainFrame extends JFrame {
 		
 		setTitle("Sistema de Fichaje");
 		
-		setSize(330,360);
+		setSize(500,375);
 		setLocationRelativeTo(null);
-		setResizable(false);
+		//setResizable(false);
 		
 		MainPanel mPanel = new MainPanel();		
 		add(mPanel);

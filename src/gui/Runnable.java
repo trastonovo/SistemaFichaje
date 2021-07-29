@@ -40,10 +40,6 @@ public class Runnable {
 }
 
 //TODO:
-//Botón de pausa
-//Formatear & filtrar ventana emergente fichajes (+invertir orden)
-//Clarificar mensajes error
-//Manejar calendario gráfico (checkCuota()) [JSpinner?] + error al introducir valor inválido
-//Optimizar conexiones
+//Manejar calendario gráfico JCalendar
 
 //Look up: Hibernate; Maven (POM.xml)
