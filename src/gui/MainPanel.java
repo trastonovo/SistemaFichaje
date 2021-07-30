@@ -70,24 +70,20 @@ public class MainPanel extends JPanel implements ActionListener {
 		centerPanel1 = new JPanel();
 		centerPanel2 = new JPanel();
 		centerPanel1.setLayout(new BorderLayout());
+		centerPanel2.setLayout(new BorderLayout());
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerPanel1, centerPanel2);
 		split.setEnabled(false);
 		split.setDividerSize(0);
 		add(split, BorderLayout.CENTER);
 		
-		////////////////
-		/////////////// IMAGE TEST [rise dog gif]
-		String url = "images/carbotZergling.gif";
-		JLabel picLabel = new JLabel(new ImageIcon(url));
-		centerPanel2.add(picLabel);
-		////////////////
-		////////////////
-
 		recentList();				
+		
+		centerPanel2.add(picLabel);
+		palamuteStatus();
 		
 		buttonDisabled();
 		
-		JLabel version = new JLabel("  Versión preliminar 0.3  ");
+		JLabel version = new JLabel("  Versión 1.0  ");
 		version.setFont(new Font("Arial", Font.ITALIC, 11));
 		southPanel.add(version, BorderLayout.WEST);		
 	}	
@@ -100,10 +96,11 @@ public class MainPanel extends JPanel implements ActionListener {
 		String date = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
 		String time = new SimpleDateFormat("HH:mm:ss").format(cal.getTime());
 		
-		if(button==clockIn) {		
+		if(button==clockIn) {
 			try {				
 				start = Instant.now(); //Counter for current clockIn session (not closed)
-				db.setClockIn(date, time);							
+				db.setClockIn(date, time);
+				palamuteStatus();
 			} catch(ClassNotFoundException ex) {
 				JOptionPane.showMessageDialog(null, ex.getMessage(), "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
@@ -115,35 +112,20 @@ public class MainPanel extends JPanel implements ActionListener {
 		if(button==clockOut) {
 			try {
 				db.setClockOut(date, time);
+				palamuteStatus();
 			} catch(ClassNotFoundException ex) {
 				JOptionPane.showMessageDialog(null, ex.getMessage(), "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
 			} catch (SQLException ex) {
 				JOptionPane.showMessageDialog(null, ex.getMessage(), "SQLException", JOptionPane.ERROR_MESSAGE);
 				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
-			}				
+			}	
 		}	
 		//Check clock in and clock out list
 		if(button==checkClock) {
-			////////////////////////
-			///////////////////////AUDIO TEST
-			String uri = "audio/Final Fantasy VII - Victory Fanfare [HQ].wav";
-			AudioInputStream ais;
-			try {
-				ais = AudioSystem.getAudioInputStream(new File(uri).getAbsoluteFile());
-				Clip clip = AudioSystem.getClip();
-				clip.open(ais);
-				clip.start();
-			} catch (UnsupportedAudioFileException | IOException e1) {
-				e1.printStackTrace();
-			} catch (LineUnavailableException e1) {
-				e1.printStackTrace();
-			}			
-
-			///////////////////////
-			///////////////////////
 			try {
 				showClockIO();
+				playSound("audio/click.wav");
 			} catch(ClassNotFoundException ex) {
 				JOptionPane.showMessageDialog(null, ex.getMessage(), "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
@@ -153,24 +135,28 @@ public class MainPanel extends JPanel implements ActionListener {
 			}				
 		}
 		//Check hour cuota from a given day
-		if(button==checkCuota) {	
+		if(button==checkCuota) {
+			playSound("audio/click.wav");
 			long[] returnTime;
 			String iDate = JOptionPane.showInputDialog("Introduce fecha 'yyyy-MM-dd'\nVacío para fecha actual");
+			playSound("audio/click.wav");
 			if(iDate.equals("")) {			
 				iDate = date;
 			}
 			returnTime = cuota(iDate, true);				
 			JOptionPane.showMessageDialog(null, returnTime[0]+"h, "+returnTime[1]+"m", "Horas registradas " + iDate, JOptionPane.INFORMATION_MESSAGE);
+			playSound("audio/click.wav");
 		}
-		
+
 		buttonDisabled();
 	}
 	
 	//DisableClockIn=Positive; DisableClockOut=Negative,0
-	public void buttonDisabled() {
+	public int buttonDisabled() {
 		
 		int count1 = 0;
 		int count2 = 0;
+		int result = 0;
 		
 		try {
 			SQL.getConnection();
@@ -192,7 +178,7 @@ public class MainPanel extends JPanel implements ActionListener {
 			    ++count2;
 			}
 			
-			int result = count1-count2;
+			result = count1-count2;
 			
 			if(result>0) {
 				clockIn.setEnabled(false);
@@ -205,6 +191,8 @@ public class MainPanel extends JPanel implements ActionListener {
 		} catch (SQLException e1) {
 			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
 		}
+		
+		return result;
 	}
 	
 	//Emergent window: Clock in-out Query
@@ -355,6 +343,38 @@ public class MainPanel extends JPanel implements ActionListener {
 		}
 	}
 	
+	public void palamuteStatus() {
+				
+		if(buttonDisabled()>0) {			
+			url = "images/palamute_out.gif";
+			picLabel.setIcon(new ImageIcon(url));
+			playSound("audio/palamute_song2.wav");
+		}
+		else {
+			url = "images/palamute_in.gif";
+			picLabel.setIcon(new ImageIcon(url));
+			playSound("audio/palamute_song.wav");
+		}			
+	}
+	
+	public void playSound(String url) {
+		
+		AudioInputStream ais;
+		try {
+			ais = AudioSystem.getAudioInputStream(new File(url).getAbsoluteFile());
+			clip = AudioSystem.getClip();
+			clip.open(ais);
+			clip.start();
+		} catch (UnsupportedAudioFileException | IOException e1) {
+			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
+		} catch (LineUnavailableException e1) {
+			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
+		}		
+	}
+	
+	private Clip clip;
+	private String url = null;
+	private JLabel picLabel = new JLabel();	
 	private JPanel centerPanel1, centerPanel2;
 	private JTextArea recent;
 	private Instant start, finish;

@@ -8,14 +8,13 @@ public class MainFrame extends JFrame {
 		
 		setTitle("Sistema de Fichaje");
 		
-		setSize(500,375);
+		setSize(400,375);
 		setLocationRelativeTo(null);
-		//setResizable(false);
+		setResizable(false);
 		
 		MainPanel mPanel = new MainPanel();		
 		add(mPanel);
 		
 		setVisible(true);
 	}
-	
 }

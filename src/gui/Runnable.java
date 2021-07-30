@@ -41,5 +41,6 @@ public class Runnable {
 
 //TODO:
 //Manejar calendario gráfico JCalendar
+//Tooltips
 
 //Look up: Hibernate; Maven (POM.xml)
