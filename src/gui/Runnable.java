@@ -40,7 +40,7 @@ public class Runnable {
 }
 
 //TODO:
-//Manejar calendario gráfico JCalendar
+//Manejar calendario gráfico JCalendar (añadir sfx cerrar ventana)
+//audio fade out
 //Tooltips
-
-//Look up: Hibernate; Maven (POM.xml)
+//Mute button

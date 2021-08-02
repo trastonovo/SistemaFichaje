@@ -3,6 +3,8 @@ package gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -55,13 +57,13 @@ public class MainPanel extends JPanel implements ActionListener {
 		clockOut.addActionListener(this);	
 		clockOut.setPreferredSize(new Dimension(150,40));
 		
-		Icon iconCuota = new ImageIcon("images/clock.png");
+		Icon iconCuota = new ImageIcon("images/calendar32.png");
 		checkCuota = new JButton(iconCuota);
 		eastPanel.add(checkCuota).setBackground(Color.WHITE);
 		checkCuota.addActionListener(this);	
 		checkCuota.setPreferredSize(new Dimension(40,40));
 		
-		Icon iconList = new ImageIcon("images/list.png");
+		Icon iconList = new ImageIcon("images/list32.png");
 		checkClock = new JButton(iconList);
 		eastPanel.add(checkClock).setBackground(Color.WHITE);
 		checkClock.addActionListener(this);
@@ -134,10 +136,10 @@ public class MainPanel extends JPanel implements ActionListener {
 				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
 			}				
 		}
-		//Check hour cuota from a given day
+		//Check hour cuota from a calendar
 		if(button==checkCuota) {
 			playSound("audio/click.wav");
-			long[] returnTime;
+			/*long[] returnTime;
 			String iDate = JOptionPane.showInputDialog("Introduce fecha 'yyyy-MM-dd'\nVacío para fecha actual");
 			playSound("audio/click.wav");
 			if(iDate.equals("")) {			
@@ -145,7 +147,34 @@ public class MainPanel extends JPanel implements ActionListener {
 			}
 			returnTime = cuota(iDate, true);				
 			JOptionPane.showMessageDialog(null, returnTime[0]+"h, "+returnTime[1]+"m", "Horas registradas " + iDate, JOptionPane.INFORMATION_MESSAGE);
-			playSound("audio/click.wav");
+			playSound("audio/click.wav");*/
+			///////////////////		WIP - WIP - WIP
+			
+			JFrame cuotaFrame = new JFrame();
+			cuotaFrame.setTitle("Cuota");			
+			cuotaFrame.setSize(250,250);
+			cuotaFrame.setLocation(getMousePosition());
+			cuotaFrame.setVisible(true);
+			cuotaFrame.setResizable(false);
+			cuotaFrame.setIconImage(new ImageIcon("images/calendar16.png").getImage());
+			cuotaFrame.setLayout(new BorderLayout());
+			
+			JCalendar calendar = new JCalendar();
+			calendar.setBounds(330,450,1,1);
+			cuotaFrame.add(calendar);
+			calendar.addPropertyChangeListener("calendar", new PropertyChangeListener() {
+			    public void propertyChange(PropertyChangeEvent e) {
+			        final Calendar c = (Calendar) e.getNewValue();
+			        int year = c.get(Calendar.YEAR);
+			        int month = (c.get(Calendar.MONTH))+1;
+			        int day = c.get(Calendar.DAY_OF_MONTH);
+			        String iDate = year + "-" + month + "-" + day;
+			        playSound("audio/click.wav");
+			        
+			    }
+			});
+			
+			///////////////////
 		}
 
 		buttonDisabled();
@@ -200,15 +229,21 @@ public class MainPanel extends JPanel implements ActionListener {
 		
 		SQL.getConnection();
 		
-		JFrame marco2 = new JFrame();
-		marco2.setTitle("Registros");			
-		marco2.setSize(330,450);
-		marco2.setLocation(getMousePosition());
-		marco2.setVisible(true);
-		marco2.setResizable(false);
+		JFrame listFrame = new JFrame();
+		listFrame.setTitle("Registros");			
+		listFrame.setSize(330,450);
+		listFrame.setLocation(getMousePosition());
+		listFrame.setVisible(true);
+		listFrame.setResizable(false);
+		listFrame.setIconImage(new ImageIcon("images/list16.png").getImage());
+		listFrame.addWindowListener(new WindowAdapter() {
+		    public void windowClosing(WindowEvent windowEvent) {
+		        playSound("audio/click_out.wav");
+		    }
+		});
 		
 		JPanel lamina2 = new JPanel();
-		marco2.add(lamina2);
+		listFrame.add(lamina2);
 		
 		JTextArea taIn = new JTextArea("Entrada\n",25,12);			
 		taIn.setEditable(false);
@@ -314,6 +349,7 @@ public class MainPanel extends JPanel implements ActionListener {
 		return returnTime;
 	}
 	
+	//Prints recent-date cuota list
 	public void recentList() {
 		
 		JLabel label = new JLabel("Lista reciente:");
@@ -342,7 +378,8 @@ public class MainPanel extends JPanel implements ActionListener {
 			recent.append("\n");
 		}
 	}
-	
+
+	//Changes gif on the main screen
 	public void palamuteStatus() {
 				
 		if(buttonDisabled()>0) {			
@@ -357,10 +394,13 @@ public class MainPanel extends JPanel implements ActionListener {
 		}			
 	}
 	
+	//Plays any sound providing url
 	public void playSound(String url) {
 		
 		AudioInputStream ais;
 		try {
+			if(clip!=null && clip.isActive())
+				clip.stop();
 			ais = AudioSystem.getAudioInputStream(new File(url).getAbsoluteFile());
 			clip = AudioSystem.getClip();
 			clip.open(ais);
@@ -371,7 +411,7 @@ public class MainPanel extends JPanel implements ActionListener {
 			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
 		}		
 	}
-	
+
 	private Clip clip;
 	private String url = null;
 	private JLabel picLabel = new JLabel();	

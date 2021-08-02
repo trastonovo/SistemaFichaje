@@ -1,6 +1,7 @@
 ----- VERSION 1.0 -----
 Nuevas características:
 -Añadidos elementos visuales
+-Añadidos iconos
 -Añadidos efectos de sonido
 
 ----- VERSION 0.3 -----
