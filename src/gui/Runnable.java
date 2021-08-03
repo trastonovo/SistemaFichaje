@@ -38,9 +38,3 @@ public class Runnable {
 		
 	public static Log myLog;
 }
-
-//TODO:
-//Manejar calendario gráfico JCalendar (añadir sfx cerrar ventana)
-//audio fade out
-//Tooltips
-//Mute button

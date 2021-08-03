@@ -1,8 +1,5 @@
 package gui;
 
-import java.awt.Image;
-import java.awt.Toolkit;
-
 import javax.swing.*;
 
 public class MainFrame extends JFrame {	
@@ -11,7 +8,7 @@ public class MainFrame extends JFrame {
 		
 		setTitle("Sistema de Fichaje");
 		
-		setIconImage(new ImageIcon("images/fichaje16.png").getImage());
+		setIconImage(new ImageIcon("images/fichaje32.png").getImage());
 		
 		setSize(400,375);
 		setLocationRelativeTo(null);

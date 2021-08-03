@@ -2,13 +2,16 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 
-import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -26,13 +29,18 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Properties;
 
 public class MainPanel extends JPanel implements ActionListener {
 	
 	public MainPanel() {
 		
-		setLayout(new BorderLayout());
+		//Ensures the settings file creation on first-time boot
+		setAudioSettings("");		
+		if(!config.exists())
+			setAudioSettings("true");
 		
+		setLayout(new BorderLayout());
 		JPanel northPanel = new JPanel();
 		add(northPanel, BorderLayout.NORTH);
 		
@@ -45,30 +53,45 @@ public class MainPanel extends JPanel implements ActionListener {
 		add(southPanel, BorderLayout.SOUTH);
 		southPanel.setPreferredSize(new Dimension(25,25));
 		
+		JPanel westPanel = new JPanel();
+		add(westPanel, BorderLayout.WEST);
+		westPanel.setPreferredSize(new Dimension(5,5));
+		
 		Icon iconBookOpen = new ImageIcon("images/book_open.png");
 		clockIn = new JButton("Entrada", iconBookOpen);
 		northPanel.add(clockIn);
 		clockIn.addActionListener(this);
-		clockIn.setPreferredSize(new Dimension(150,40));
+		clockIn.setPreferredSize(new Dimension(185,40));
+		clockIn.setToolTipText("Fichar para entrada");
 		
 		Icon iconBookClosed = new ImageIcon("images/book_closed.png");
 		clockOut = new JButton("Salida", iconBookClosed);
 		northPanel.add(clockOut);
 		clockOut.addActionListener(this);	
-		clockOut.setPreferredSize(new Dimension(150,40));
+		clockOut.setPreferredSize(new Dimension(185,40));
+		clockOut.setToolTipText("Fichar para salida");
 		
 		Icon iconCuota = new ImageIcon("images/calendar32.png");
 		checkCuota = new JButton(iconCuota);
 		eastPanel.add(checkCuota).setBackground(Color.WHITE);
 		checkCuota.addActionListener(this);	
 		checkCuota.setPreferredSize(new Dimension(40,40));
+		checkCuota.setToolTipText("Ver cuotas por día en el calendario");
 		
 		Icon iconList = new ImageIcon("images/list32.png");
 		checkClock = new JButton(iconList);
 		eastPanel.add(checkClock).setBackground(Color.WHITE);
 		checkClock.addActionListener(this);
-		checkClock.setPreferredSize(new Dimension(40,40));		
+		checkClock.setPreferredSize(new Dimension(40,40));	
+		checkClock.setToolTipText("Ver todas las fechas/horas de entrada/salida");
 		
+		//Icon iconMute = new ImageIcon("images/mute32.png");
+		muteAudio = new JButton();
+		changeMuteIcon();
+		eastPanel.add(muteAudio).setBackground(Color.WHITE);
+		muteAudio.addActionListener(this);
+		muteAudio.setPreferredSize(new Dimension(40,40));		
+				
 		centerPanel1 = new JPanel();
 		centerPanel2 = new JPanel();
 		centerPanel1.setLayout(new BorderLayout());
@@ -139,17 +162,6 @@ public class MainPanel extends JPanel implements ActionListener {
 		//Check hour cuota from a calendar
 		if(button==checkCuota) {
 			playSound("audio/click.wav");
-			/*long[] returnTime;
-			String iDate = JOptionPane.showInputDialog("Introduce fecha 'yyyy-MM-dd'\nVacío para fecha actual");
-			playSound("audio/click.wav");
-			if(iDate.equals("")) {			
-				iDate = date;
-			}
-			returnTime = cuota(iDate, true);				
-			JOptionPane.showMessageDialog(null, returnTime[0]+"h, "+returnTime[1]+"m", "Horas registradas " + iDate, JOptionPane.INFORMATION_MESSAGE);
-			playSound("audio/click.wav");*/
-			///////////////////		WIP - WIP - WIP
-			
 			JFrame cuotaFrame = new JFrame();
 			cuotaFrame.setTitle("Cuota");			
 			cuotaFrame.setSize(250,250);
@@ -158,23 +170,59 @@ public class MainPanel extends JPanel implements ActionListener {
 			cuotaFrame.setResizable(false);
 			cuotaFrame.setIconImage(new ImageIcon("images/calendar16.png").getImage());
 			cuotaFrame.setLayout(new BorderLayout());
+			cuotaFrame.addWindowListener(new WindowAdapter() {
+			    public void windowClosing(WindowEvent windowEvent) {
+			        playSound("audio/click_out.wav");
+			    }
+			});
+			
+			JTextField text = new JTextField();
+			text.setEditable(false);
+			cuotaFrame.add(text, BorderLayout.SOUTH);
 			
 			JCalendar calendar = new JCalendar();
 			calendar.setBounds(330,450,1,1);
 			cuotaFrame.add(calendar);
+			
+			//Shows time for current date
+	        long[] returnTime;
+			returnTime = cuota(date, true);
+	        text.setText("Horas registradas: " + returnTime[0] + "h, " + returnTime[1]+"m");
+				        
 			calendar.addPropertyChangeListener("calendar", new PropertyChangeListener() {
-			    public void propertyChange(PropertyChangeEvent e) {
-			        final Calendar c = (Calendar) e.getNewValue();
+			    public void propertyChange(PropertyChangeEvent e) {	
+			    	//If a month is <10, adds a 0 to the left for DB use
+			    	String month0 = "";
+			    	String day0 = "";
+			    	
+			    	final Calendar c = (Calendar) e.getNewValue();
 			        int year = c.get(Calendar.YEAR);
 			        int month = (c.get(Calendar.MONTH))+1;
+			        if(month<10)
+			        	month0 = "0";
 			        int day = c.get(Calendar.DAY_OF_MONTH);
-			        String iDate = year + "-" + month + "-" + day;
+			        if(day<10)
+			        	day0 = "0";
+			        String iDate = year + "-" + month0 + month + "-" + day0 + day;
 			        playSound("audio/click.wav");
 			        
+			        long[] returnTime;
+					returnTime = cuota(iDate, true);
+			        text.setText("Horas registradas: " + returnTime[0] + "h, " + returnTime[1]+"m");
 			    }
 			});
-			
-			///////////////////
+		}
+		
+		//Toggle OnOff all output audio
+		if(button==muteAudio) {
+						
+			if(p.getProperty("audio").contains("false"))
+				setAudioSettings("true");
+			else if (p.getProperty("audio").contains("true"))
+				setAudioSettings("false");
+			playSound("");
+			changeMuteIcon();
+			playSound("audio/turn_on.wav");
 		}
 
 		buttonDisabled();
@@ -303,7 +351,7 @@ public class MainPanel extends JPanel implements ActionListener {
 		return totalDates;	
 	}
 	
-	//Check cuota from a given day
+	//Check cuota from a given da (0=h, 1=m)y
 	public long[] cuota(String date, boolean unfinishedTime) {
 		
 		long[] returnTime = new long[2];
@@ -360,6 +408,7 @@ public class MainPanel extends JPanel implements ActionListener {
 		centerPanel1.add(recent);
 		recent.setEditable(false);
 
+		//Unused for the time being
 		JScrollPane sp = new JScrollPane(recent);
 		centerPanel1.add(sp);
 		
@@ -396,28 +445,70 @@ public class MainPanel extends JPanel implements ActionListener {
 	
 	//Plays any sound providing url
 	public void playSound(String url) {
-		
-		AudioInputStream ais;
-		try {
-			if(clip!=null && clip.isActive())
-				clip.stop();
-			ais = AudioSystem.getAudioInputStream(new File(url).getAbsoluteFile());
-			clip = AudioSystem.getClip();
-			clip.open(ais);
-			clip.start();
-		} catch (UnsupportedAudioFileException | IOException e1) {
-			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
-		} catch (LineUnavailableException e1) {
-			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
-		}		
-	}
 
-	private Clip clip;
-	private String url = null;
+		if(p.getProperty("audio").contains("true")) {
+			AudioInputStream ais;
+			try {
+				if(clip!=null && clip.isActive())
+					clip.stop();
+				ais = AudioSystem.getAudioInputStream(new File(url).getAbsoluteFile());
+				clip = AudioSystem.getClip();
+				clip.open(ais);
+				clip.start();
+			} catch (UnsupportedAudioFileException | IOException e1) {
+				Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
+			} catch (LineUnavailableException e1) {
+				Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
+			}	
+		}
+		else if(clip!=null)
+			clip.stop();
+	}
+	
+	public void setAudioSettings(String audio) {
+		
+		config = new File("config.properties");
+		try {
+			p = new Properties();
+			if(audio.contains("true"))
+				p.setProperty("audio", "true");				
+			else if (audio.contains("false"))
+				p.setProperty("audio", "false");
+			else {
+				FileReader fr = new FileReader("config.properties");
+				p.load(fr);
+			}
+			FileWriter fw = new FileWriter(config);
+			p.store(fw, "settings");
+			fw.close();				
+		} catch(FileNotFoundException e1) {
+			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
+		} catch (IOException e1) {
+			Runnable.myLog.logger.info(e1 + " - " +  Runnable.myLog.stackTraceToString(e1));
+		}
+	}
+	
+	public void changeMuteIcon() {
+		
+		if(p.getProperty("audio").contains("true")) {
+			muteAudio.setIcon(new ImageIcon("images/unMute32.png"));
+			muteAudio.setToolTipText("Silenciar audio");
+		}			
+		else if(p.getProperty("audio").contains("false")) {
+			muteAudio.setIcon(new ImageIcon("images/mute32.png"));			
+			muteAudio.setToolTipText("Restaurar audio");
+		}			
+	}
+	
+	private Properties p;
+	private File config;
+	private Clip clip;	
 	private JLabel picLabel = new JLabel();	
 	private JPanel centerPanel1, centerPanel2;
 	private JTextArea recent;
-	private Instant start, finish;
-	private JButton clockIn, clockOut, checkClock, checkCuota;
+	private Instant start = Instant.now();
+	private Instant finish;
+	private JButton clockIn, clockOut, checkClock, checkCuota, muteAudio;
+	private String url = null;
 	private static SQL db = new SQL();
 }

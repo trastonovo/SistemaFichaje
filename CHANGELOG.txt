@@ -1,8 +1,11 @@
 ----- VERSION 1.0 -----
 Nuevas características:
+-Añadido calendario visual interactivo
 -Añadidos elementos visuales
 -Añadidos iconos
 -Añadidos efectos de sonido
+-Añadido botón de silencio
+-Añadidos "tooltips"
 
 ----- VERSION 0.3 -----
 Nuevas características:
