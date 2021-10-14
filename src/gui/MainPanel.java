@@ -85,6 +85,13 @@ public class MainPanel extends JPanel implements ActionListener {
 		checkClock.setPreferredSize(new Dimension(40,40));	
 		checkClock.setToolTipText("Ver todas las fechas/horas de entrada/salida");
 		
+		Icon iconRefresh = new ImageIcon("images/refresh32.png");///////////////////////////////////////////////////////////////////////////
+		refresh = new JButton(iconRefresh);
+		eastPanel.add(refresh).setBackground(Color.WHITE);
+		refresh.addActionListener(this);
+		refresh.setPreferredSize(new Dimension(40,40));	
+		refresh.setToolTipText("Recarga la lista reciente");
+		
 		//Icon iconMute = new ImageIcon("images/mute32.png");
 		muteAudio = new JButton();
 		changeMuteIcon();
@@ -101,14 +108,14 @@ public class MainPanel extends JPanel implements ActionListener {
 		split.setDividerSize(0);
 		add(split, BorderLayout.CENTER);
 		
-		recentList();				
+		recentList(true);				
 		
 		centerPanel2.add(picLabel);
 		palamuteStatus();
 		
 		buttonDisabled();
 		
-		JLabel version = new JLabel("  Versión 1.0  ");
+		JLabel version = new JLabel("  Versión 1.0.1  ");
 		version.setFont(new Font("Arial", Font.ITALIC, 11));
 		southPanel.add(version, BorderLayout.WEST);		
 	}	
@@ -138,6 +145,7 @@ public class MainPanel extends JPanel implements ActionListener {
 			try {
 				db.setClockOut(date, time);
 				palamuteStatus();
+				recentList(false);
 			} catch(ClassNotFoundException ex) {
 				JOptionPane.showMessageDialog(null, ex.getMessage(), "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 				Runnable.myLog.logger.info(ex + " - " +  Runnable.myLog.stackTraceToString(ex));
@@ -147,7 +155,7 @@ public class MainPanel extends JPanel implements ActionListener {
 			}	
 		}	
 		//Check clock in and clock out list
-		if(button==checkClock) {
+		if(button==checkClock) {			
 			try {
 				showClockIO();
 				playSound("audio/click.wav");
@@ -211,6 +219,10 @@ public class MainPanel extends JPanel implements ActionListener {
 			        text.setText("Horas registradas: " + returnTime[0] + "h, " + returnTime[1]+"m");
 			    }
 			});
+		}
+		//Refresh recent list
+		if(button==refresh) {
+			recentList(false);
 		}
 		
 		//Toggle OnOff all output audio
@@ -365,7 +377,7 @@ public class MainPanel extends JPanel implements ActionListener {
 		try {
 			ResultSet[] rs = db.calculateHours(date);
 			while(rs[0].next() && rs[1].next()) {
-				
+
 				SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 				date1 = sdf.parse(rs[0].getString(2));
 				date2 = sdf.parse(rs[1].getString(2));
@@ -398,29 +410,29 @@ public class MainPanel extends JPanel implements ActionListener {
 	}
 	
 	//Prints recent-date cuota list
-	public void recentList() {
+	public void recentList(boolean og) {
 		
-		JLabel label = new JLabel("Lista reciente:");
-		label.setForeground(Color.GRAY);
-		centerPanel1.add(label, BorderLayout.NORTH);
+		if(og) {	//avoids label on "reload"
+			JLabel label = new JLabel("Lista reciente:");
+			label.setForeground(Color.GRAY);
+			centerPanel1.add(label, BorderLayout.NORTH);
+			recent = new JTextArea(15,12);
+		}
 		
-		recent = new JTextArea(15,12);
-		centerPanel1.add(recent);
-		recent.setEditable(false);
-
-		//Unused for the time being
-		JScrollPane sp = new JScrollPane(recent);
-		centerPanel1.add(sp);
-		
-		LocalDate current = LocalDate.now();
-		LocalDate before = current.minusDays(14);		
-		
-		ArrayList<LocalDate> days = getDaysBetween(before, current);
-				
-		for(int i=0; i<days.size(); i++) {
-			long[] dayCuota = cuota(days.get(i).toString(), false);
-			recent.append(days.get(i).toString() + ":  " + dayCuota[0] + "h, " + dayCuota[1] + "m");
+			recent.selectAll();
+			recent.replaceSelection("");
+			centerPanel1.add(recent);
+			recent.setEditable(false);
 			
+			LocalDate current = LocalDate.now();
+			LocalDate before = current.minusDays(14);		
+			
+			ArrayList<LocalDate> days = getDaysBetween(before, current);
+		
+		for(int i=0; i<days.size(); i++) {
+			long[] dayCuota = cuota(days.get(i).toString(), true);
+			recent.append(days.get(i).toString() + ":  " + dayCuota[0] + "h, " + dayCuota[1] + "m");
+
 			if((days.size()-1)<=i)
 				break;
 			
@@ -508,7 +520,7 @@ public class MainPanel extends JPanel implements ActionListener {
 	private JTextArea recent;
 	private Instant start = Instant.now();
 	private Instant finish;
-	private JButton clockIn, clockOut, checkClock, checkCuota, muteAudio;
+	private JButton clockIn, clockOut, checkClock, checkCuota, muteAudio, refresh;
 	private String url = null;
 	private static SQL db = new SQL();
 }
