@@ -223,6 +223,7 @@ public class MainPanel extends JPanel implements ActionListener {
 		//Refresh recent list
 		if(button==refresh) {
 			recentList(false);
+			playSound("audio/click.wav");
 		}
 		
 		//Toggle OnOff all output audio
