@@ -12,9 +12,9 @@ public class Runnable {
 		try {
 			myLog = new Log("log.txt");
 		} catch (SecurityException e1) {
-			myLog.logger.info(e1 + " - " +  myLog.stackTraceToString(e1));
+			myLog.logger.warning(e1 + " - " +  myLog.stackTraceToString(e1));
 		} catch (IOException e1) {
-			myLog.logger.info(e1 + " - " + myLog.stackTraceToString(e1));
+			myLog.logger.warning(e1 + " - " + myLog.stackTraceToString(e1));
 		}
 		
 		MainFrame mFrame = new MainFrame();
@@ -28,9 +28,9 @@ public class Runnable {
 					if(SQL.getConnection() != null)
 						SQL.closeConnection();
 				} catch (ClassNotFoundException e) {
-					myLog.logger.info(e + " - " +  myLog.stackTraceToString(e));
+					myLog.logger.warning(e + " - " +  myLog.stackTraceToString(e));
 				} catch (SQLException e) {
-					myLog.logger.info(e + " - " +  myLog.stackTraceToString(e));
+					myLog.logger.warning(e + " - " +  myLog.stackTraceToString(e));
 				}
 			}
 		});

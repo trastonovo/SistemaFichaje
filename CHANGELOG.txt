@@ -1,3 +1,8 @@
+----- VERSION 1.0.2 -----
+Corrección de errores:
+-Cambiados niveles de advertencia en los logs
+-Definitivamente, solucionados errores de cálculos durante una sesión
+
 ----- VERSION 1.0.1 -----
 Nuevas características:
 -Añadido botón para recargar la lista de recientes
